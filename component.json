@@ -1,0 +1,6 @@
+{
+    "repos": "https://github.com/aralejs/events",
+    "version": "v1.2.0",
+    "name": "events",
+    "main": "events.js"
+}
