@@ -19,6 +19,8 @@ var eventSplitter = /\s+/
 //     object.trigger('expand');
 //
 function Events() {
+	this.__events = {};
+	this.__interimCache = {};
 }
 
 
@@ -28,12 +30,20 @@ Events.prototype.on = function(events, callback, context) {
     var cache, event, list
     if (!callback) return this
 
-    cache = this.__events || (this.__events = {})
+    cache = this.__events;
     events = events.split(eventSplitter)
 
     while (event = events.shift()) {
         list = cache[event] || (cache[event] = [])
-        list.push(callback, context)
+        list.push(callback, context);
+
+        //解决，先trigger，然后on的时候可以触发事件
+        if(this.__interimCache[event]){
+        	//this.trigger(event,this.__interimCache[event])
+
+        	this.trigger.apply(this,[event].concat(this.__interimCache[event]));
+        	delete this.__interimCache[event];
+        }
     }
 
     return this
@@ -84,6 +94,8 @@ Events.prototype.off = function(events, callback, context) {
     return this
 }
 
+//
+//var interimCache = {};
 
 // Trigger one or many events, firing all bound callbacks. Callbacks are
 // passed the same arguments as `trigger` is, apart from the event name
@@ -111,6 +123,11 @@ Events.prototype.trigger = function(events) {
         // Execute event callbacks except one named "all"
         if (event !== 'all') {
             returned = triggerEvents(list, rest, this) && returned
+        }
+
+        //解决，先trigger，然后on的时候可以触发事件
+        if(!list){
+        	this.__interimCache[event] = rest;
         }
 
         // Execute "all" callbacks.
